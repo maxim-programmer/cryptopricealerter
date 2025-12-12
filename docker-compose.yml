@@ -1,0 +1,36 @@
+services:
+  app:
+    build: .
+    container_name: crypto_price_alerter
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - crypto-net
+    command: [./cpa]
+  
+  db:
+    image: postgres:16
+    container_name: crypto_db
+    env_file:
+      - .env
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - crypto-net
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]
+      interval: 5s
+      retries: 5
+      start_period: 5s
+      timeout: 2s
+
+volumes:
+  pgdata:
+
+networks:
+  crypto-net:
