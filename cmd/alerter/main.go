@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -18,19 +19,16 @@ import (
 
 func main() {
 	var (
-		time_tick int
-		api_key   string = os.Getenv("API_KEY")
-		user = os.Getenv("POSTGRES_USER")
-		password = os.Getenv("POSTGRES_PASSWORD")
-		dbname = os.Getenv("POSTGRES_DB")
-		host = os.Getenv("DB_HOST")
-		port = os.Getenv("DB_PORT")
+		time_tick, _ = strconv.Atoi(os.Getenv("TIME_TICK"))
+		api_key   = os.Getenv("API_KEY")
+		user      = os.Getenv("POSTGRES_USER")
+		password  = os.Getenv("POSTGRES_PASSWORD")
+		dbname    = os.Getenv("POSTGRES_DB")
+		host      = os.Getenv("DB_HOST")
+		port      = os.Getenv("DB_PORT")
 	)
 	prices := make(map[string]pricefetcher.Price)
 	fetcher := pricefetcher.NewFetcher()
-
-	fmt.Print("Введите время в секундах для интервала отправки запросов: ")
-	_, _ = fmt.Scan(&time_tick)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan bool, 1)
@@ -55,9 +53,9 @@ func main() {
 	alertRepo := repository.NewAlertRepository(db)
 
 	newAlert := &models.Alert{
-		Symbol: "bitcoin",
+		Symbol:    "bitcoin",
 		Condition: ">",
-		Price: 8000,
+		Price:     8000,
 	}
 
 	err = alertRepo.Create(newAlert)
@@ -66,7 +64,6 @@ func main() {
 	}
 
 	fmt.Println("Created new alert, ID =", newAlert.ID)
-
 
 	go func() {
 		<-sigs
@@ -108,7 +105,6 @@ func main() {
 					fmt.Println("Алерт удален!")
 				}
 			}
-			
 
 		case <-ctx.Done():
 			return
