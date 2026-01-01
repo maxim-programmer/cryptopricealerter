@@ -5,25 +5,26 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 )
 
-type Fetcher struct {
-	HTTPClient *http.Client
-	BaseURL    string
+type fetcher struct {
+	httpClient *http.Client
+	baseURL    []string
 }
 
-func NewFetcher() *Fetcher {
-	return &Fetcher{
-		HTTPClient: &http.Client{
+func NewFetcher() *fetcher {
+	return &fetcher{
+		httpClient: &http.Client{
 			Timeout: 30 * time.Second,
 		},
-		BaseURL: "https://api.coingecko.com/api/v3/simple/price?vs_currencies=usd&ids=",
+		baseURL: []string{"https://api.coingecko.com/api/v3/simple/price?vs_currencies=usd&ids=", "&x_cg_demo_api_key=", "&vs_currencies=usd"},
 	}
 }
 
-func (f *Fetcher) GetPrices(ctx context.Context, symbols string, m map[string]Price, api_key string) (map[string]Price, error) {
-	req, err := http.NewRequestWithContext(ctx, "GET", f.BaseURL+symbols+"&x_cg_demo_api_key="+api_key+"&vs_currencies=usd", nil)
+func (f *fetcher) GetPrices(ctx context.Context, symbols []string, m map[string]Price, api_key string) (map[string]Price, error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", f.baseURL[0]+strings.Join(symbols, ",")+f.baseURL[1]+api_key+f.baseURL[2], nil)
 	if err != nil {
 		return nil, err
 	}
@@ -39,8 +40,7 @@ func (f *Fetcher) GetPrices(ctx context.Context, symbols string, m map[string]Pr
 		return nil, err
 	}
 
-	err = json.Unmarshal(body, &m)
-	if err != nil {
+	if err := json.Unmarshal(body, &m); err != nil {
 		return nil, err
 	}
 
