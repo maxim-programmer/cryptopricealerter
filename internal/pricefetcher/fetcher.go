@@ -29,7 +29,7 @@ func (f *fetcher) GetPrices(ctx context.Context, symbols []string, m map[string]
 		return nil, err
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := f.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
