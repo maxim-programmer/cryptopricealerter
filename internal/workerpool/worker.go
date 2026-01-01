@@ -38,9 +38,13 @@ func (w *Worker) Start() {
 			}
 			switch job.Condition {
 			case ">":
-				handleTriggered(w.alertRepo, job, w.id)
+				if job.ActualPrice > job.Price {
+					handleTriggered(w.alertRepo, job, w.id)
+				}
 			case "<":
-				handleTriggered(w.alertRepo, job, w.id)
+				if job.ActualPrice > job.Price {
+					handleTriggered(w.alertRepo, job, w.id)
+				}
 			}
 
 		}
