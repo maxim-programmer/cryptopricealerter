@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"cryptopricealerter/internal/alert"
+	"cryptopricealerter/internal/cli"
 	"cryptopricealerter/internal/pricefetcher"
 	"cryptopricealerter/internal/repository"
 	"cryptopricealerter/internal/workerpool"
@@ -30,6 +31,14 @@ func main() {
 		chanSize, _    = strconv.Atoi(os.Getenv("CHAN_SIZE"))
 		workerCount, _ = strconv.Atoi(os.Getenv("WORKER_COUNT"))
 	)
+
+	if time_tick <= 0 {
+		log.Fatal("TIME_TICK must be > 0")
+	}
+	if workerCount <= 0 {
+		log.Fatal("WORKER_COUNT must be > 0")
+	}
+	
 	prices := make(map[string]pricefetcher.Price)
 	fetcher := pricefetcher.NewFetcher()
 
@@ -51,12 +60,17 @@ func main() {
 
 	fmt.Println("=====Создание алертов=====")
 	for {
-		newAlert := alert.ReadAlert()
+		newAlert := cli.ReadAlert()
+		if err := cli.ValidateAlert(newAlert); err != nil {
+			log.Println("Error:", err)
+			continue
+		}
 
 		if err := alertRepo.Create(newAlert); err != nil {
-			log.Fatal(err)
+			log.Println("Error:", err)
+			continue
 		}
-		fmt.Println("=====Created new alert, ID =", strconv.Itoa(int(newAlert.ID)) + "======")
+		fmt.Println("=====Created new alert, ID =", strconv.Itoa(int(newAlert.ID))+"======")
 
 		var exitFlag string
 		fmt.Print("Закончить создание алертов? (yes -> закончить): ")
@@ -75,7 +89,8 @@ func main() {
 		case <-ticker.C:
 			alerts, err := alertRepo.GetAll()
 			if err != nil {
-				log.Fatal(err)
+				log.Println("Error:", err)
+				continue
 			}
 
 			if !alert.HasActiveAlerts(alerts) {
@@ -101,9 +116,10 @@ func main() {
 				}
 			}
 
-			prices, err = fetcher.GetPrices(ctx, symbols, prices, api_key)
+			prices, err = fetcher.GetPrices(ctx, symbols, api_key)
 			if err != nil {
-				log.Fatal(err)
+				log.Println("Error:", err)
+				continue
 			}
 
 			for _, alert := range alerts {

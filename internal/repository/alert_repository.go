@@ -37,11 +37,10 @@ func (r *alertRepo) GetAll() ([]*alert.Alert, error) {
 
 func (r *alertRepo) GetByID(id uint) (*alert.Alert, error) {
 	var alert alert.Alert
-	err := r.db.First(&alert, id).Error
-	if err != nil {
+	if err := r.db.First(&alert, id).Error; err != nil {
 		return nil, err
 	}
-	return &alert, err
+	return &alert, nil
 }
 
 func (r *alertRepo) Delete(id uint) error {

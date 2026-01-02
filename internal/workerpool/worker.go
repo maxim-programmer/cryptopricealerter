@@ -42,7 +42,7 @@ func (w *Worker) Start() {
 					handleTriggered(w.alertRepo, job, w.id)
 				}
 			case "<":
-				if job.ActualPrice > job.Price {
+				if job.ActualPrice < job.Price {
 					handleTriggered(w.alertRepo, job, w.id)
 				}
 			}
@@ -54,7 +54,8 @@ func (w *Worker) Start() {
 
 func handleTriggered(alertRepo repository.AlertRepository, job Job, workerID uint) {
 	if err := alertRepo.MarkTriggered(job.ID); err != nil {
-		log.Fatal(err)
+		log.Println("Error:", err)
+		return
 	}
-	fmt.Println("Алерт сработал:", job.Condition, job.ActualPrice, "Воркер:", workerID)
+	fmt.Println("Алерт", job.ID, "сработал:", job.ActualPrice, job.Condition, job.Price, "Воркер:", workerID)
 }
